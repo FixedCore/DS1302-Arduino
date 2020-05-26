@@ -71,19 +71,28 @@ private:
     uint8_t dataPin;
     uint8_t clockPin;
 
-    static uint8_t toBCD(uint8_t val) const;
+    enum addr
+    {
+        SECONDS = 0x80,
+        MINUTES = 0x82,
+        HOURS = 0x84,
+        MONTHDAY = 0x86,
+        MONTH = 0x88,
+        WEEKDAY = 0x8A,
+        YEAR = 0x8C,
+        WP = 0x8E,
+        TCS = 90,
+        RAM = 0xC0
+    };
+
+    static uint8_t
+    toBCD(uint8_t val) const;
     static uint8_t fromBCD(uint8_t val) const;
 
     void sendByte(uint8_t val) const;
     uint8_t getByte() const;
+    void sendMessage(uint8_t addr, uint8_t val) const;
+    uint8_t getMessage(uint8_t addr) const;
 };
 
 #endif //DS1302_LIB
-
-const static uint8_t SECONDS = 0x80;
-const static uint8_t MINUTES = 0x82;
-const static uint8_t HOURS = 0x84;
-const static uint8_t DATE = 0x86;
-const static uint8_t MONTH = 0x88;
-const static uint8_t WEEKDAY = 0x8A;
-const static uint8_t YEAR = 0x8C;

@@ -7,17 +7,17 @@ DS1302::DS1302(uint8_t chipEnablePin, uint8_t dataPin, uint8_t clockPin)
     pinMode(clockPin, OUTPUT);
 };
 
-static uint8_t toBCD(uint8_t val) const
+static uint8_t DS1302::toBCD(uint8_t val) const
 {
     return ((val / 10) << 4 | (val % 10));
 }
 
-static uint8_t fromBCD(uint8_t val) const
+static uint8_t DS1302::fromBCD(uint8_t val) const
 {
     return (BCDHI(val) >> 4) * 10 + BCDLO(val);
 }
 
-void sendByte(uint8_t val) const
+void DS1302::sendByte(uint8_t val) const
 {
     for (uint8_t i = 0; i < 8; i++)
     {
@@ -27,7 +27,7 @@ void sendByte(uint8_t val) const
         digitalWrite(clockPin, 0);
     }
 }
-uint8_t getByte() const
+uint8_t DS1302::getByte() const
 {
     uint8_t ret = 0;
     for (uint8_t i = 0; i < 8; i++)
@@ -40,10 +40,61 @@ uint8_t getByte() const
     return ret;
 }
 
-uint8_t DS1302::getSeconds() const;
-uint8_t DS1302::getMinutes() const;
-uint8_t DS1302::getHours() const;
-uint8_t DS1302::getMonthDay() const;
-uint8_t DS1302::getMonth() const;
-uint8_t DS1302::getWeekDay() const;
-uint8_t DS1302::getYear() const;
+void DS1302::sendMessage(uint8_t addr, uint8_t val) const
+{
+    pinMode(dataPin, OUTPUT);
+    sendByte(addr);
+    sendByte(val);
+}
+uint8_t DS1302::getMessage(uint8_t addr) const
+{
+    pinMode(dataPin, OUTPUT);
+    sendByte(addr + 1);
+    pinMode(dataPin, INPUT);
+    return getByte();
+}
+
+uint8_t DS1302::getSeconds() const
+{
+    return fromBCD(getMessage(addr::SECONDS) & 0x7f);
+    //magic to discard the CH bit
+}
+
+uint8_t DS1302::getMinutes() const
+{
+    return fromBCD(getMessage(addr::MINUTES));
+    //no extra bits here
+}
+
+uint8_t DS1302::getHours() const
+{
+    uint8_t raw = getMessage(addr::HOURS);
+    if (raw & 0x80)                 //12 hour mode
+        return fromBCD(raw & 0x1F); //5 bits
+    else                            //24 hour mode
+        return fromBCD(raw & 0x3F); //6 bits
+}
+
+uint8_t DS1302::getMonthDay() const
+{
+    return fromBCD(getMessage(addr::MONTHDAY));
+    //no extra bits here
+}
+
+uint8_t DS1302::getMonth() const
+{
+    return fromBCD(getMessage(addr::MONTH));
+    //no extra bits here
+}
+
+uint8_t DS1302::getWeekDay() const
+{
+    return fromBCD(getMessage(addr::WEEKDAY));
+    //no extra bits here
+}
+
+uint8_t DS1302::getYear() const
+{
+    return fromBCD(getMessage(addr::YEAR));
+    //no extra bits here
+}
