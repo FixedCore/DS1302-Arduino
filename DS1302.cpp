@@ -42,16 +42,21 @@ uint8_t DS1302::getByte() const
 
 void DS1302::sendMessage(uint8_t addr, uint8_t val) const
 {
+    digitalWrite(ChipEnablePin, HIGH);
     pinMode(dataPin, OUTPUT);
     sendByte(addr);
     sendByte(val);
+    digitalWrite(ChipEnablePin, LOW);
 }
 uint8_t DS1302::getMessage(uint8_t addr) const
 {
+    digitalWrite(ChipEnablePin, HIGH);
     pinMode(dataPin, OUTPUT);
     sendByte(addr + 1);
     pinMode(dataPin, INPUT);
-    return getByte();
+    uint8_t ret = getByte();
+    digitalWrite(ChipEnablePin, LOW);
+    return ret;
 }
 
 uint8_t DS1302::getSeconds() const
@@ -97,4 +102,78 @@ uint8_t DS1302::getYear() const
 {
     return fromBCD(getMessage(addr::YEAR));
     //no extra bits here
+}
+
+void DS1302::setSeconds(uint8_t val) const
+{
+    uint8_t backup = getMessage(addr::SECONDS);
+    sendMessage(addr::SECONDS, toBCD(val % 60) | (backup & 0x80));
+    //Bitmagic to preserve the ClockHalt bit
+}
+
+void DS1302::setMinutes(uint8_t val) const
+{
+    sendMessage(addr::MINUTES, toBCD(val % 60));
+}
+
+void DS1302::setHours(uint8_t val) const
+{
+    uint8_t backup = getMessage(addr::HOURS);
+    uint8_t cap = backup & 0x80 ? 12 : 24; //12- or 24 hour mode
+    if (cap == 24)
+    {
+        val %= 24;
+    }
+    else
+    {
+        val %= 13;
+        if (val == 0)
+            val = 12;
+    }
+    sendMessage(addr::HOURS, toBCD(val));
+}
+
+void DS1302::setMonthDay(uint8_t val) const //This is unnecessarily complicated
+{
+    uint8_t month = fromBCD(getMessage(addr::MONTH));
+    uint8_t cap = 32;
+    switch (month)
+    {
+    case 4:
+    case 6:
+    case 9:
+    case 11:
+        cap = 31;
+        break;
+    case 2:
+        month = fromBCD(getMessage(addr::YEAR));                        //month is now year, deal with it
+        if ((month % 4 == 0 && month % 100 != 0) || (month % 400 == 0)) //Leap year
+            cap = 30;
+        else
+            cap = 29;
+    }
+    if (val == 0)
+        val = cap - 1;
+    else
+        val %= cap;
+    sendMessage(addr::MONTHDAY, toBCD(val));
+}
+
+void DS1302::setMonth(uint8_t val) const
+{
+    if (val == 0)
+        val = 12;
+    sendMessage(addr::MONTH, toBCD(val % 13));
+}
+
+void DS1302::setWeekDay(uint8_t val) const
+{
+    if (val == 0)
+        val = 7;
+    sendMessage(addr::WEEKDAY, toBCD(val % 8));
+}
+
+void DS1302::setYear(uint8_t val) const
+{
+    sendMessage(addr::YEAR, val % 100);
 }

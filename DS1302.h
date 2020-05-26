@@ -41,13 +41,22 @@ public:
 
     //These functions take a single 8 bit unsigned value, in regular binary format.
     //No extra conversions required.
-    //No error checking either.
+    //Values are internally capped to their natural bounds.
+    //Range: <0,59>
     void setSeconds(uint8_t val) const;
+    //Range: <0,59>
     void setMinutes(uint8_t val) const;
+    //Range: <0,23> for 24 hour mode
+    //Range: <1,12> for 12 hour mode
     void setHours(uint8_t val) const;
+    //Range <1, n> where n is the number of days in a given month.
+    //Leap years are taken into account.
     void setMonthDay(uint8_t val) const;
+    //Range: <1,12>
     void setMonth(uint8_t val) const;
+    //Range: <1,7>
     void setWeekDay(uint8_t val) const;
+    //Range: <00, 99>, corresponding to <2000, 2099>
     void setYear(uint8_t val) const;
 
     //These can start and stop the timekeeping function of the DS1302.
