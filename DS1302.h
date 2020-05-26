@@ -16,32 +16,16 @@
 
 class DS1302
 {
-    //public constants:
-    //these are actually just commands for writing data to the IC
-    //Incrementing them by 1 makes them read data.
 public:
-    const static uint8_t SECONDS = 0x80;
-    const static uint8_t MINUTES = 0x82;
-    const static uint8_t HOURS = 0x84;
-    const static uint8_t DATE = 0x86;
-    const static uint8_t MONTH = 0x88;
-    const static uint8_t WEEKDAY = 0x8A;
-    const static uint8_t YEAR = 0x8C;
-
     enum Mode
     {
         12Hour,
         24Hour
     };
 
-private:
-    uint8_t chipEnablePin;
-    uint8_t dataPin;
-    uint8_t clockPin;
-
-public:
-    DS1302(uint8_t chipEnablePin, uint8_t dataPin, uint8_t clockPin)
-        : chipEnablePin(chipEnablePin), dataPin(dataPin), clockPin(clockPin){};
+    //Constructor takes the 3 MCU pin numbers connected to the DS1302 chip.
+    //Initialization is handled inside, you don't have to use pinMode().
+    DS1302(uint8_t chipEnablePin, uint8_t dataPin, uint8_t clockPin);
 
     //These functions return their values as regular 8 bit unsigned values.
     //No extra conversions required.
@@ -69,10 +53,37 @@ public:
     //These can start and stop the timekeeping function of the DS1302.
     //When the clock is stopped, the time is no longer kept
     //but current usage is less tan 100nA.
-    void startClock();
-    void stopClock();
+    void startClock() const;
+    void stopClock() const;
 
+    //This function selects either the 12- or 24 hour mode of the clock.
+    //Using this functions reset the hour register, so it has to be rewritten afterwards.
+    void setHourMode(DS1302::Mode mode) const;
 
+    //These functions interact with the 32 bytes of RAM on the chip.
+    //The index is a number of register in the range <0,31>.
+    //The value is a regular 8bit value.
+    uint8_t getRam(uint8_t index) const;
+    void setRam(uint8_t index, uint8_t value) const;
+
+private:
+    uint8_t chipEnablePin;
+    uint8_t dataPin;
+    uint8_t clockPin;
+
+    static uint8_t toBCD(uint8_t val) const;
+    static uint8_t fromBCD(uint8_t val) const;
+
+    void sendByte(uint8_t val) const;
+    uint8_t getByte() const;
 };
 
 #endif //DS1302_LIB
+
+const static uint8_t SECONDS = 0x80;
+const static uint8_t MINUTES = 0x82;
+const static uint8_t HOURS = 0x84;
+const static uint8_t DATE = 0x86;
+const static uint8_t MONTH = 0x88;
+const static uint8_t WEEKDAY = 0x8A;
+const static uint8_t YEAR = 0x8C;
