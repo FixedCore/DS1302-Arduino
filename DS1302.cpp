@@ -204,6 +204,17 @@ void DS1302::stopClock() const
 void DS1302::setHourMode(DS1302::Mode mode) const
 {
     uint8_t hour = 0;
-    if(mode==Mode::Hour12) hour=0x80;
+    if (mode == Mode::Hour12)
+        hour = 0x80;
     sendMessage(addr::HOURS, hour);
+}
+
+uint8_t DS1302::getRam(uint8_t index) const
+{
+    return getMessage(addr::RAM + (index % 32) * 2);
+}
+
+void DS1302::setRam(uint8_t index, uint8_t value) const
+{
+    sendMessage(addr::RAM, value);
 }
