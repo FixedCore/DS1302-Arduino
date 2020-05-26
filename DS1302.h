@@ -1,17 +1,16 @@
 #ifndef DS1302_LIB
 #define DS1302_LIB
+
+#include "Arduino.h"
+
 #define BCDHI(x) ((x)&0xF0)
 #define BCDLO(x) ((x)&0x0F)
 #define TOBIT(x) ((x) != 0)
-//#define uint8_t unsigned short int
-//#define int8_t short int
 
 /*This is a library for communication with the
 //Maxim DS1302 real time clock IC. It's made for use with the ArduinoIDE and
 //whatever microcontroller or development board it supports.
-//I use the Arduino DigitalWrite/Read functions because I'm too lazy to 
-//deal with selecting the right port for each pin number, and so that
-//there's no need to port anything.
+//Created by Marcin M., 26.05.2020
 */
 
 class DS1302
@@ -19,13 +18,17 @@ class DS1302
 public:
     enum Mode
     {
-        12Hour,
-        24Hour
+        Hour12,
+        Hour24
     };
 
     //Constructor takes the 3 MCU pin numbers connected to the DS1302 chip.
     //Initialization is handled inside, you don't have to use pinMode().
     DS1302(uint8_t chipEnablePin, uint8_t dataPin, uint8_t clockPin);
+
+    //This function sets the correct pin modes for pins used.
+    //Please don't use them for anything else unless you know what you're doing.
+    void begin() const;
 
     //These functions return their values as regular 8 bit unsigned values.
     //No extra conversions required.
@@ -61,12 +64,12 @@ public:
 
     //These can start and stop the timekeeping function of the DS1302.
     //When the clock is stopped, the time is no longer kept
-    //but current usage is less tan 100nA.
+    //but current usage is less than 100nA.
     void startClock() const;
     void stopClock() const;
 
     //This function selects either the 12- or 24 hour mode of the clock.
-    //Using this functions reset the hour register, so it has to be rewritten afterwards.
+    //Using this functions reset the hour register to 0, so it has to be rewritten afterwards.
     void setHourMode(DS1302::Mode mode) const;
 
     //These functions interact with the 32 bytes of RAM on the chip.

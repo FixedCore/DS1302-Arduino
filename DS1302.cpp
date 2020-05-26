@@ -2,10 +2,14 @@
 DS1302::DS1302(uint8_t chipEnablePin, uint8_t dataPin, uint8_t clockPin)
     : chipEnablePin(chipEnablePin), dataPin(dataPin), clockPin(clockPin)
 {
+}
+
+void begin() const
+{
     pinMode(chipEnablePin, OUTPUT);
     pinMode(dataPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
-};
+}
 
 static uint8_t DS1302::toBCD(uint8_t val) const
 {
@@ -176,4 +180,30 @@ void DS1302::setWeekDay(uint8_t val) const
 void DS1302::setYear(uint8_t val) const
 {
     sendMessage(addr::YEAR, val % 100);
+}
+
+void DS1302::startClock() const
+{
+    uint8_t secs = getMessage(addr::SECONDS);
+    if (!(secs & 0x80))
+    {
+        secs |= 0x80;
+        sendMessage(addr::SECONDS, secs);
+    }
+}
+void DS1302::stopClock() const
+{
+    uint8_t secs = getMessage(addr::SECONDS);
+    if ((secs & 0x80))
+    {
+        secs &= ~0x80;
+        sendMessage(addr::SECONDS, secs);
+    }
+}
+
+void DS1302::setHourMode(DS1302::Mode mode) const
+{
+    uint8_t hour = 0;
+    if(mode==Mode::Hour12) hour=0x80;
+    sendMessage(addr::HOURS, hour);
 }
