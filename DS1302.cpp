@@ -4,19 +4,19 @@ DS1302::DS1302(uint8_t chipEnablePin, uint8_t dataPin, uint8_t clockPin)
 {
 }
 
-void begin() const
+void DS1302::begin() const
 {
     pinMode(chipEnablePin, OUTPUT);
     pinMode(dataPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
 }
 
-static uint8_t DS1302::toBCD(uint8_t val) const
+uint8_t DS1302::toBCD(uint8_t val)
 {
     return ((val / 10) << 4 | (val % 10));
 }
 
-static uint8_t DS1302::fromBCD(uint8_t val) const
+uint8_t DS1302::fromBCD(uint8_t val)
 {
     return (BCDHI(val) >> 4) * 10 + BCDLO(val);
 }
@@ -46,20 +46,24 @@ uint8_t DS1302::getByte() const
 
 void DS1302::sendMessage(uint8_t addr, uint8_t val) const
 {
-    digitalWrite(ChipEnablePin, HIGH);
-    pinMode(dataPin, OUTPUT);
-    sendByte(addr);
-    sendByte(val);
-    digitalWrite(ChipEnablePin, LOW);
+  digitalWrite(chipEnablePin, HIGH);
+  pinMode(dataPin, OUTPUT);
+  sendByte(addr::WP);
+  sendByte(0);
+  sendByte(adr);
+  sendByte(val);
+  sendByte(addr::WP);
+  sendByte(0x80);
+  digitalWrite(chipEnablePin, LOW);
 }
 uint8_t DS1302::getMessage(uint8_t addr) const
 {
-    digitalWrite(ChipEnablePin, HIGH);
+    digitalWrite(chipEnablePin, HIGH);
     pinMode(dataPin, OUTPUT);
     sendByte(addr + 1);
     pinMode(dataPin, INPUT);
     uint8_t ret = getByte();
-    digitalWrite(ChipEnablePin, LOW);
+    digitalWrite(chipEnablePin, LOW);
     return ret;
 }
 
@@ -211,10 +215,10 @@ void DS1302::setHourMode(DS1302::Mode mode) const
 
 uint8_t DS1302::getRam(uint8_t index) const
 {
-    return getMessage(addr::RAM + (index % 32) * 2);
+    return getMessage(addr::RAM + (index % 31) * 2);
 }
 
 void DS1302::setRam(uint8_t index, uint8_t value) const
 {
-    sendMessage(addr::RAM, value);
+    sendMessage(addr::RAM + (index % 31) * 2, value);
 }
